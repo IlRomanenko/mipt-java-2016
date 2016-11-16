@@ -20,7 +20,7 @@ public class MergeableSSTable<K, V> extends SSTable<K, V> {
 
     private final Comparator<K> keyComparator;
 
-    final int bufferSize = 10 * 1024;
+    private final int bufferSize = 10 * 1024;
     private final byte[] buffer = new byte[bufferSize];
 
     public MergeableSSTable(String path,
@@ -34,6 +34,8 @@ public class MergeableSSTable<K, V> extends SSTable<K, V> {
 
 
     public void merge(String path, String tableName, MergeableSSTable<K, V> another) {
+
+        epochNumber++;
 
         List<K> newerKeys = getKeys(readKeys());
         List<K> olderKeys = getKeys(another.readKeys());
@@ -60,6 +62,8 @@ public class MergeableSSTable<K, V> extends SSTable<K, V> {
             sortedKeys.add(olderKeys.get(olderKeysPos));
             olderKeysPos += 1;
         }
+        newerKeys.clear();
+        olderKeys.clear();
 
         try {
             RandomAccessFile resultDB;
@@ -157,6 +161,8 @@ public class MergeableSSTable<K, V> extends SSTable<K, V> {
             if (!delFile.delete()) {
                 System.out.println("Can't erase old table file " + this.getPath());
             }
+            delFile = new File(this.path + ".sign");
+            delFile.delete();
             //end remove
 
             indices.clear();
